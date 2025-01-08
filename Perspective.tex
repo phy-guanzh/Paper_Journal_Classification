@@ -32,7 +32,8 @@
 \begin{abstract}
 %Citation and target journal prediction are of importance for academic scholars and government departments in guiding funding arrangements and research priority. Topic modelling of abstracts serves as an effective method to summarise the main idea of papers, providing a significant feature for citation and target journal prediction. In this study, we analysed papers from three different journals, applying various topic modelling techniques to improve the prediction performance of citations and target journals. 
 
-Academic impact prediction is an important task for academic scholars, funding agencies, and journal editors to guide funding arrangements, research priorities, and editorial decisions. This study presents a framework that combines topic modelling techniques, including structural topic modelling (STM) and latent Dirichlet allocation (LDA), with machine learning classifiers while integrating multiple clustering algorithms, such as K-means and hierarchical clustering, to predict both the number of citations a paper will receive and the most suitable journal for submission. Additionally, an interactive dashboard tool is provided to allow users to input paper abstracts and obtain predictions using different models.
+Academic impact prediction is an important task for scholars, funding agencies, and journal editors to guide funding allocations, research priorities, and editorial decisions. This study presents a framework that uses the paper’s submission year, page count, views, and title abstracts and combines topic modelling techniques with various machine learning classifiers while integrating multiple clustering algorithms to predict both the number of citations a paper will receive and the most suitable journal for submission by excluding variables unavailable prior to submission. Additionally, interactive dashboard tools are provided, allowing users to input paper abstracts and obtain predictions using different models.
+
 
 \end{abstract}
 
@@ -46,7 +47,10 @@ Academic impact prediction is an important task for academic scholars, funding a
 
 \section*{Introduction}
 
-The exponential growth in the number of academic papers in different journals and on various topics brings unignorable challenges for researchers and policymakers who arrange funding and research priorities in institutions\cite{10.1162/qss_a_00327}. There is an increasing need for intelligent tools that can analyse and predict both citation potential and appropriate target journals for academic papers\cite{10.1002/asi.24810}. To address this, we focus on three journals within the field of operations research and systems analysis: the \href{ https://www.tandfonline.com/journals/tjor20}{``Journal of the Operational Research Society''}, \href{ https://www.tandfonline.com/journals/thss20}{``Health Systems''}, \href{https://www.tandfonline.com/journals/tjsm20}{``Journal of Simulation''}. The journals were selected for their relevance to decision analytics, healthcare systems, and simulation methodologies.
+The exponential growth in the number of academic papers in different journals and on various topics brings unignorable challenges for researchers and policymakers who arrange funding and research priorities in institutions\cite{10.1162/qss_a_00327}. There is an increasing need for intelligent tools that can analyse and predict both citation potential and appropriate target journals for academic papers\cite{10.1002/asi.24810}. 
+
+
+In this work, we explored the situation by focusing on the data from three journals within the field of operations research and systems analysis from 2020 to 2022: the \href{https://www.tandfonline.com/journals/tjor20}{\textit{Journal of the Operational Research Society}}, \href{https://www.tandfonline.com/journals/thss20}{\textit{Health Systems}}, and \href{https://www.tandfonline.com/journals/tjsm20}{\textit{Journal of Simulation}}, exploring the practicability of predicting citations and target journals by analysing topics from title and abstract inputs along with other submission parameters. The project is divided into five parts: exploratory data analysis, topic modelling, regression, and classification.
 
 %In this work, three different journals, \href{ https://www.tandfonline.com/journals/tjor20}{``Journal of the Operational Research Society''}, \href{ https://www.tandfonline.com/journals/thss20}{``Health Systems''}, \href{https://www.tandfonline.com/journals/tjsm20}{``Journal of Simulation''} are compared and focused on. 
 
@@ -75,12 +79,12 @@ Abstract & Summary of the paper's content \\
 \label{tab:table1}
 \end{table}
 
-Since the title name may reveal useful information for topic modelling, the two variables, ``Title'' and ``Abstract,'' are combined into a single input variable ``Title Abstract''. And ``Authors'' are transformed into ``Author\_Counts'' which can provide more useful information. Different techniques are applied to fill the missing 'Views' values in the train and test data, with details provided in the regression section. Considering that one of our targets is predicting journal names, the two variables, the ``Views'' and ``Almetric Score,'' are excluded from the model from the classification model, as these metrics are not available prior to submission.  A unique identifier, ``row\_id'', was added to each record.  ``Title\_Abstract'' was transformed into lemmatisation to standardise word forms first. Next, stop words and numeric tokens were removed to reduce noise in the dataset.
+Since the title name may reveal useful information for topic modelling, the two variables, ``Title'' and ``Abstract,'' are combined into a single input variable, ``Title Abstract''. And ``Authors'' are transformed into ``Author\_Counts'' which can provide useful numeric information. Different techniques are applied to fill the missing ``Views'' values in the train and test data, with details provided in the regression section only where we use ``View'' and ``altmetric Score'' variables. Considering that one of our targets is predicting journal names, the two variables, the ``Views'' and ``Almetric Score,'' are excluded from the classification model, as these metrics are not available prior to submission.  A unique identifier, ``row\_id'', was added to each record.  ``Title\_Abstract'' was transformed into lemmatisation to standardise word forms first. Next, stop words and numeric tokens were removed to reduce noise in the dataset.
 
 \section{Topic Modelling}
 \subsection*{Bag of words and Comparisions} \
 
-\noindent The combined text was tokenised into individual words and bigrams using a bag-of-words(BoW) approach~\cite{8950616}. The top 100 frequencies of unigrams and bigrams in the dataset are shown in Figure~\ref{fig:bagwords}. The bigrams can provide more information about differences among journals compared to common unigrams.
+\noindent The combined text of ``Title\_Abstract'' was tokenised into individual words and bigrams using a bag-of-words(BoW) approach~\cite{8950616}. The top 100 frequencies of unigrams and bigrams in the dataset are shown in Figure~\ref{fig:bagwords}. The bigrams can provide more useful and distinctive information compared to common unigrams. Bigrams are also used in all other parts of the work.
 
 \begin{figure}[!tbhp]
 \centering
@@ -89,10 +93,8 @@ Since the title name may reveal useful information for topic modelling, the two 
 \caption{Top 100 frequencies of unigrams and bigrams from datasets}
 \label{fig:bagwords}
 \end{figure}
- 
-The BoW frequency of bigrams is analysed from two perspectives: its variation across different journals and over four time periods, as shown in Figure~\ref{fig:bagwordsjournal} and Figure~\ref{fig:bagwordstime}.
 
-\begin{figure}[!tbhp]
+ \begin{figure}[!tbhp]
 \centering
 \includegraphics[width=0.3\textwidth]{bag_words/radar_journal.png}
 
@@ -100,7 +102,10 @@ The BoW frequency of bigrams is analysed from two perspectives: its variation ac
 \label{fig:bagwordsjournal}
 \end{figure}
 
-Different areas are focused on across journals, and the high-frequency bigrams show obvious distinctions, which can help in developing future classification models to identify the most appropriate target journal. Some common bigrams still exist across journals, such as ``simulation model'' and ``event simulation'' appearing between the journal \textit{Health Systems} and \textit{Journal of Simulation}, as well as ``supply chain'' shared between \textit{Journal of Simulation} and \textit{Journal of Operational Research Society}.
+The BoW frequency of bigrams is analysed from two perspectives: its variation across different journals and over four time periods, as shown in Figure~\ref{fig:bagwordsjournal} and Figure~\ref{fig:bagwordstime}. 
+
+
+As shown in Figure~\ref{fig:bagwordsjournal}, Different areas are focused on across journals, and the high-frequency bigrams show obvious distinctions, which can help in developing future classification models to identify the most appropriate target journal. Some common bigrams still exist across journals, such as ``simulation model'' and ``event simulation'' appearing between the journal \textit{Health Systems} and \textit{Journal of Simulation}, as well as ``supply chain'' shared between \textit{Journal of Simulation} and \textit{Journal of Operational Research Society}.
 
 \begin{figure}[!tbhp]
 \centering
@@ -110,10 +115,10 @@ Different areas are focused on across journals, and the high-frequency bigrams s
 \label{fig:bagwordstime}
 \end{figure}
 
-Some interesting phenomena appear over time across three journals. Firstly, there is no paper published in the journal \textit{Health Systems} before the Middle period (2007-2012), and ``health care'' is the main topic of the journal and shows increasing popularity across years. Secondly, the key bigrams in the \textit{Journal of Simulation} are relatively concentrated and increasingly popular across years, such as ``simulation model'', ``discrete event'', and ``event simulation'', whereas the \textit{Journal of the Operational Research Society} shows more flat probabilities across bigrams, with more focus on terms like "supply chain."
+Some interesting phenomena appear over time across three journals as shown in Figure~\ref{fig:bagwordstime}. Firstly, there is no paper published in the journal \textit{Health Systems} before the Middle period (2007-2012), and ``health care'' is the main topic of the journal and shows increasing popularity across years. Secondly, the key bigrams in the \textit{Journal of Simulation} are relatively concentrated and increasingly popular across years, such as ``simulation model'', ``discrete event'', and ``event simulation'', whereas the \textit{Journal of the Operational Research Society} shows more flat probabilities across bigrams, with more focus on terms like ``supply chain."
 
 
-\subsection*{Latent Dirichlet Allocation} Latent Dirichlet Allocation (LDA)~\cite{10.4108/eai.13-7-2018.159623} is a widely used topic modelling algorithm that identifies hidden topics in a collection of documents based on word co-occurrence patterns. It assumes that each document is a mixture of topics, and each topic is a distribution over words. LDA requires specifying a value of \textit{k} (the number of topics) in the corpus as shown in Figure~\ref{fig:perplexityk6}. Determining an appropriate value for \textit{k} is significant, as it probably impacts the quality and interpretability of the topic modelling results. 
+\subsection*{Latent Dirichlet Allocation} Latent Dirichlet Allocation (LDA)~\cite{10.4108/eai.13-7-2018.159623} is a widely used topic modelling algorithm that identifies hidden topics in a collection of documents based on word co-occurrence patterns. It assumes that each document is a mixture of topics, and each topic is a distribution over words. LDA requires specifying a value of \textit{k} (the number of topics) in the corpus, as in the example shown in Figure~\ref{fig:perplexityk6} with the number of topics $k = 10$. Determining an appropriate value for \textit{k} is significant, as it probably impacts the quality and interpretability of the topic modelling results. Perplexity is a common metric used to evaluate the fit of topic models and provides a reference for selecting the optimal \textit{k} value in LDA. 
 
 
 \begin{figure}[!tbhp]
@@ -128,11 +133,11 @@ Some interesting phenomena appear over time across three journals. Firstly, ther
 
 
 
-Perplexity is a common metric used to evaluate the fit of topic models and provides a reference for selecting the optimal \textit{k} value in LDA. 
 
 Lower perplexity generally indicates a better model fit. As shown in Figure~\ref{fig:perplexity}, the \textit{2000-2022} year group has a much higher perplexity compared to other year groups, indicating that over a longer time span, the data is more diverse, and the model finds it harder to capture consistent topics across the entire period. Similarly, the \textit{Journal of the Operational Research Society} has a much higher perplexity compared to other journals, indicating that the journal covers a broader and more diverse range of topics, making it harder for the model to find consistent patterns.
 
-Furthermore, Figure~\ref{fig:perplexity} also shows that considering dataset features can help reduce perplexity and the optimal number of topics.
+Furthermore, Figure~\ref{fig:perplexity} also shows that considering dataset features like year groups can help reduce perplexity and the optimal number value of topics. 
+
 
 
 \begin{figure}[!tbhp]
@@ -147,7 +152,7 @@ Furthermore, Figure~\ref{fig:perplexity} also shows that considering dataset fea
 
 \subsection*{Structural Topic Modelling} \
 
-Structural Topic Modelling (STM)~\cite{10.4108/eai.13-7-2018.159623} provided a method to incorporate document-level metadata (e.g., publication year, journal name) into the topic modelling process, which builds on the foundation of LDA.  Several metrics can be used to evaluate the optimal $k$~\cite{stm}, such as \textit{Exclusivity}, \textit{Heldout Likelihood}, \textit{Residuals}, and \textit{Semantic Coherence} as shown in Table~\ref{tab:stm_metrics}.
+Structural Topic Modelling (STM)~\cite{10.4108/eai.13-7-2018.159623} provided a method to improve topic modelling performance by incorporating document-level metadata (e.g., publication year, journal name as mentioned above) into the topic modelling process, which builds on the foundation of LDA.  Several metrics can be used in STM to evaluate the optimal $k$~\cite{stm}, such as \textit{Exclusivity}, \textit{Heldout Likelihood}, \textit{Residuals}, and \textit{Semantic Coherence} as shown in Table~\ref{10.4108/eai.13-7-2018.159623,tab:stm_metrics}.
 
 
 \begin{table}[!htbp]
@@ -172,32 +177,13 @@ Structural Topic Modelling (STM)~\cite{10.4108/eai.13-7-2018.159623} provided a 
 \label{tab:stm_metrics}
 \end{table}
 
-The STM metrics suggest that $k = 10$ is a reasonable choice, as the majority of the metrics remain stable at this point compared to the stable case of $k = 20$ using LDA shown in Figure~\ref{fig:perplexity}.
-
+As shown in Table~\ref{tab:stm_metrics}, the STM metrics suggest that $k = 10$ is a reasonable choice, as the majority of the metrics remain stable at this point compared to the stable case of $k = 20$ using LDA shown in Figure~\ref{fig:perplexity}.
 
 \begin{figure}[!tbhp]
 \centering
 \includegraphics[width=0.7\linewidth]{bag_words/topics_STM10.png}
 \caption{The identified topics using STM with the number of topics $k = 10$.}
 \label{fig:stmtopics}
-\end{figure}
-
-The similarity $S$ of topics $i$ and $j$ between two models can be evaluated by Formula~\ref{eqn:similarity}~\cite{HAN201239}:
-
-\vspace*{-12pt}
-\begin{align}
-S_{ij} =\frac{\sum_{w=1}^n A_{wi} B_{wj}}{\sqrt{\sum_{w=1}^n A_{wi}^2} \times \sqrt{\sum_{w=1}^n B_{wj}^2}} \numberthis \label{eqn:similarity} 
-\end{align}\vspace*{-12pt}
-
-Where $A_{wi}$ and $B_{wj}$ are the probabilities $\beta_{wi}=P\left(\operatorname{word}_w \mid \operatorname{topic}_i\right)$ and $\beta_{wj}=P\left(\operatorname{word}_w \mid \operatorname{topic}_j\right)$ of the $w^{th}$ word from the LDA model and STM model.
-
-The similarity matrix shown in Figure~\ref{fig:similarity} suggests that 50\% of topics have a similarity greater than 0.7, and 80\% of topics have a similarity greater than 0.4 between the two models with the same number of topics $k=10$.
-
-\begin{figure}[!tbhp]
-\centering
-\includegraphics[width=0.6\linewidth]{bag_words/simularity_matrix.png}
-\caption{The similarity matrix between LDA and STM models with topic number $k = 10$.}
-\label{fig:similarity}
 \end{figure}
 
 One of the benefits of the STM model is that it can easily reveal the topic trend with data features like time. As shown in Figure~\ref{fig:STMtrend}, topics 1, 10, 7, and 8 demonstrate an increasing trend in popularity over the years. In contrast, topics 2, 3, 4, and 5 suggest a potential decline in popularity, although with wide uncertainty bands. Notably, topics 6 and 9 show clear and consistent decreases in popularity over time.
@@ -209,22 +195,41 @@ One of the benefits of the STM model is that it can easily reveal the topic tren
 \label{fig:STMtrend}
 \end{figure}
 
+Although we obtained more information with two different models, the similarity between two models can cause multicollinearity, negatively influencing model training. The similarity $S$ of topics $i$ and $j$ between two models can be evaluated by Formula~\ref{eqn:similarity}~\cite{HAN201239}:
+
+\vspace*{-12pt}
+\begin{align}
+S_{ij} =\frac{\sum_{w=1}^n A_{wi} B_{wj}}{\sqrt{\sum_{w=1}^n A_{wi}^2} \times \sqrt{\sum_{w=1}^n B_{wj}^2}} \numberthis \label{eqn:similarity} 
+\end{align}\vspace*{-12pt}
+
+Where $A_{wi}$ and $B_{wj}$ are the probabilities $\beta_{wi}=P\left(\operatorname{word}_w \mid \operatorname{topic}_i\right)$ and $\beta_{wj}=P\left(\operatorname{word}_w \mid \operatorname{topic}_j\right)$ of the $w^{th}$ word from the LDA model and STM model.
+
+The similarity matrix shown in Figure~\ref{fig:similarity} suggests that 50\% of topics have a similarity greater than 0.7, and 80\% of topics have a similarity greater than 0.4 between the two models with the same number of topics $k=10$. The Principal Component Analysis (PCA)~\cite{doi:10.1080/14786440109462720} is a common method to obtain uncorrelated principal components and remove correlations.
+
+\begin{figure}[!tbhp]
+\centering
+\includegraphics[width=0.6\linewidth]{bag_words/simularity_matrix.png}
+\caption{The similarity matrix between LDA and STM models with topic number $k = 10$.}
+\label{fig:similarity}
+\end{figure}
+
+
 \section*{Citations Prediction with Regression}
 
 \subsection*{Preprocessing} \
 
 The topic probabilities generated by the two models were combined with the original data as features for regression analysis. The dataset was split into 80\% training data and 20\% test data to evaluate model performance. Additionally, the Journal Name column was transformed using one-hot encoding to convert categorical values into binary features.
 
-The missing 'Views' values in the training data are filled using predictions from a linear regression model based on 'Citations,' while in the test data, they are replaced with mean values.
+The missing ``Views'' values in the training data are filled using predictions from a linear regression model based on 'Citations,' while in the test data, they are replaced with mean values.
 
 \subsection*{Linear Regression} \
 
-Although two topic models, LDA and STM, have been trained, the similarity may lead to redundancy in the features generated from both models with the same $k$ value. The redundancy can negatively affect regression models~\cite{lm} due to multicollinearity. Principal Component Analysis (PCA)~\cite{doi:10.1080/14786440109462720} is applied to reduce the dimensionality of the combined topic distributions and transform correlated features into a set of uncorrelated principal components. As shown in Figure~\ref{fig:lmpca}, the first 23 PCA components are selected to train the linear regression model.
+Although two topic models, LDA and STM, have been trained, the similarity may lead to redundancy in the features generated from both models with the same $k$ value. The redundancy can negatively affect regression models~\cite{lm} due to multicollinearity. PCA is applied to reduce the dimensionality of the combined topic distributions and transform correlated features into a set of uncorrelated principal components. As shown in Figure~\ref{fig:lmpca}, the first 23 PCA components are selected to train the linear regression model.
 
 
 \begin{figure}[!tbhp]
 \centering
-\includegraphics[width=0.5\linewidth]
+\includegraphics[width=0.8\linewidth]
 {regression/pca_regression_lm.png}
 \caption{Explained and cumulative variances by principal components.}
 \label{fig:lmpca}
@@ -268,8 +273,9 @@ Compared to XGBoost, Random Forest~\cite{Breiman2001} takes a different approach
 \label{tab:grid_scan}
 \end{table}
 
-The three models are evaluated using four metrics: Mean Squared Error (MSE), Root Mean Squared Error (RMSE), Coefficient of Determination ($\text{R}^2$), and Residuals, as shown in Figure~\ref{fig:metrics_res}. The linear regression model shows the poorest performance due to the non-linear relationships between the target variable and the predictors.
+The three models are evaluated using four metrics: mean squared error (MSE), root mean squared error (RMSE), coefficient of determination ($\text{R}^2$), and residuals, as shown in Figure~\ref{fig:metrics_res}. 
 
+In all three models, the residuals between predictions and actual values are generally large, particularly considering that most actual values are below 10. The linear regression model shows the longest tails with a skewed centre value, which can be from the non-linear relationships between the target variable and the predictors, suggesting that the models are missing key information, and additional features or context may be required to achieve more accurate predictions.
 
 \begin{figure}[!tbhp]
 \centering
@@ -337,55 +343,67 @@ K-Nearest Neighbours (KNN)~\cite{Mucherino2009} is a non-parametric, distance-ba
 
 \subsubsection*{Multinomial Logistic Regression}
 
-Multinomial Logistic Regression (LG)~\cite{doi:https://doi.org/10.1002/9781119450382.ch10} is a supervised learning algorithm used for multi-class classification. The model predicts the class label by estimating the probability of each possible class. In this study, the predictions were trained by selecting the class with the highest probability for each test sample.
+Multinomial Logistic Regression (LG)~\cite{doi:https://doi.org/10.1002/9781119450382.ch10} is a supervised learning algorithm commonly used for multi-class classification, where the model predicts the class label by estimating the probability of each possible class. It extends binary logistic regression to handle scenarios with more than two categories. In this study, predictions were made by selecting the class with the highest predicted probability for each test sample, ensuring that each record was assigned to a single class.
 
 \subsubsection*{Random Forest}
 
-The Random Forest model used for classification was trained with 500 trees and 3 features randomly selected at each split.
+The Random Forest model for target journal classification was trained with 500 trees and 3 features randomly selected at each split.
 
 \begin{figure}%[tbhp]
 \centering
-\includegraphics[width=.3\linewidth]{class/conf_RandomForest.png}
-\includegraphics[width=.3\linewidth]{class/conf_SVM.png}
-\includegraphics[width=.3\linewidth]{class/conf_XGBoost.png}
+\includegraphics[width=.45\linewidth]{class/conf_RandomForest.png}
+\includegraphics[width=.45\linewidth]{class/conf_SVM.png}
+\includegraphics[width=.45\linewidth]{class/conf_XGBoost.png}
 \caption{Confusion matrices for RF, SVM, and XGBoost models.}
 \label{fig:class_con}
 \end{figure}
 
 \subsubsection*{XGBoost}
 
-For the classification task, the XGBoost model was trained with the same parameter settings as in the regression task, including a maximum tree depth of 6, a learning rate ($\eta$) of 0.3, and 100 boosting rounds. The objective function was set to multi-class classification (softmax) to handle the multi-class journal prediction task.
+For the classification task, the XGBoost model was trained with a maximum tree depth of 6, a learning rate ($\eta$) of 0.3, and 100 boosting rounds. The objective function was set to multi-class classification (softmax) to achieve the multi-class journal prediction.
 
 \subsubsection*{SVM}
-Support Vector Machine (SVM)~\cite{708428} is a supervised learning algorithm that finds an optimal hyperplane to separate different classes in a high-dimensional feature space. In this study, a radial basis function (RBF) kernel was employed to allow for non-linear decision boundaries, enhancing the model's ability to capture complex relationships in the data. 
+Support Vector Machine (SVM)~\cite{708428} is a supervised learning algorithm that finds an optimal hyperplane to separate different classes in a high-dimensional feature space. In this study, a radial basis function kernel was applied to allow for non-linear decision boundaries, which allows model to capture complex relationships in the data. 
+
 
 \subsubsection*{Neural Network}
 A neural network (NN)~\cite{mcculloch1943logical} model is a supervised learning algorithm that models complex relationships between input features and target labels through interconnected layers of neurones. The network architecture in this work consisted of two hidden layers, with 10 neurones in the first layer and 5 neurones in the second layer. The activation function used was sigmoid, ensuring non-linear transformations of the input features. 
 
-
-\begin{figure}%[tbhp]
+\begin{figure}[H]
 \centering
 \includegraphics[width=.9\linewidth]{regression/class_metrics_all.png}
 \caption{Metrics for classification evaluation.}
 \label{fig:class_metrics_all}
 \end{figure}
 
-
 \subsection*{Evaluations}
 
-The RF, SVM, and XGBoost models have the highest accuracy and precision scores, both exceeding 95\%, compared to the other three models as shown in Figure~\ref{fig:class_metrics_all} and Figure~\ref{fig:class_con}. While SVM demonstrated the highest precision across all three models, it showed poorer recall performance for minority samples in the \textit{Health Systems} and \textit{Journal of Simulation categories}.
+As shown in Figure~\ref{fig:class_metrics_all}, in this work, the Random Forest, SVM, and XGBoost models generally show better performance compared to KNN, MLR, and NN algorithms, which have the highest accuracy and precision scores, both exceeding 95\%.
+
+Among three models with higher metrics, SVM showed poorer recall and F1 performance, indicating bad prediction for minority samples in the \textit{Health Systems} and \textit{Journal of Simulation categories} compared to the other two models as shown in Figure~\ref{fig:class_con}.
 
 
-\section{Prediction Dashboard}
+\section{Dashboard Design}
 
-After training, we have one LR model for missing value, two topic models (STM and LDA), 
+To improve portability, two Shiny-based dashboards are developed for citation count and target journal prediction. 
 
+\subsection*{Citation Number Prediction}
+After receiving input data from users, the previously described cleaning steps and one-hot encoding for journal names are applied. Then, topic probabilities are obtained using LDA and STM, respectively.  During the linear regression phase, PCA is first applied to address multicollinearity between the STM and LDA models; additional regression results are generated using trained XGBoost and the Random Forest models, respectively.
+
+\subsection*{Target Journal Prediction}
+For the target journal prediction, topic modelling results from LDA and STM serve as inputs. Feature engineering is applied to provide a binary variable indicating the presence of frequent journal bigrams. A stacked clustering model combining two clustering algorithms is then applied. Finally, all these features are used as inputs for the XGBoost and Random Forest models in this phase to obtain target fianl prediction shown in the dashboard.
+
+
+\section*{Summary}
+
+
+Providing initial thoughts on which journal is suitable and assessing the impact of a paper is sometimes challenging for scholars and editors. In this work, by comparing three journals focusing on data analytics, healthcare systems, and simulation methodologies from 2000 to 2022, we applied topic modelling and machine learning techniques to predict the target journal and citation count based on title and abstract inputs. Two corresponding dashboards were developed. The results show that XGBoost and Random Forest models with simple learning parameters can effectively identify the suitable target journal compared to other machine learning techniques. However, larger residuals appear when predicting citation counts using only titles and abstracts without considering the full paper content and other informative inputs.
 
 
 
 \acknow{Please include your acknowledgments here, set in a single paragraph. Please do not include any acknowledgments in the Supporting Information, or anywhere else in the manuscript.}
 
-\showacknow % Display the acknowledgements section
+%\showacknow % Display the acknowledgements section
 
 % Bibliography
 \bibliography{pnas-sample}
